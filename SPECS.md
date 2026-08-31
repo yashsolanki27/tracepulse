@@ -34,6 +34,17 @@
 
 ## Phase 2e
 
-- [ ] Email ingestion: IMAP listener extracts title/description from
+- [x] Email ingestion: IMAP listener extracts title/description from
   incoming mail, calls existing POST /tickets
+
+  Implementation: `app/email_ingest.py` — stdlib IMAP4_SSL poller scheduled
+  via APScheduler (60s default) inside the API process. Unseen mail ->
+  subject=title, plain-text body=description -> HTTP POST to the existing
+  `/tickets` endpoint (same validation + RCA/triage/similarity/SLA/assignment
+  pipeline, untouched). Mail marked seen after successful ticket creation.
+  Env vars: `EMAIL_IMAP_HOST`, `EMAIL_IMAP_PORT` (993), `EMAIL_USER`,
+  `EMAIL_PASSWORD`, `EMAIL_FOLDER` (INBOX), `EMAIL_POLL_SECONDS` (60),
+  `TRACEPULSE_API_URL` (http://localhost:8000). Poller is disabled entirely
+  when `EMAIL_IMAP_HOST` is unset. Tests: `tests/test_email_ingest.py`
+  (`python -m unittest tests.test_email_ingest`).
 
