@@ -54,3 +54,20 @@ class Ticket(Base):
     resolution_text = Column(Text, nullable=True)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     embedding = Column(Vector(384), nullable=True)
+
+
+class IngestDedup(Base):
+    """Dedup state for externally ingested incidents (PulseGrid chain).
+
+    Keyed by an opaque dedup_key supplied by the producer (e.g. PulseGrid's
+    "alert:{alertname}:{instance}" or "order:{id}"). A key seen within the
+    cooldown window is acknowledged (202) without creating a new ticket.
+    """
+
+    __tablename__ = "ingest_dedup"
+
+    dedup_key = Column(String, primary_key=True)
+    last_reported_at = Column(DateTime(timezone=True), nullable=False)
+    ticket_id = Column(Integer, nullable=True)
+    source = Column(String, nullable=True)
+

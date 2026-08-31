@@ -26,7 +26,7 @@ CORS_ORIGINS = [
 from database import engine
 from email_ingest import poll_inbox
 from models import Base
-from routers import engineers, tickets
+from routers import engineers, ingest, tickets
 from sla import check_slas
 
 
@@ -98,3 +98,4 @@ app.add_middleware(
 )
 app.include_router(tickets.router)
 app.include_router(engineers.router)
+app.include_router(ingest.router)
