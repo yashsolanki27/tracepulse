@@ -9,3 +9,11 @@
 - [x] 7. Resolve endpoint
 - [x] 8. Seed script, verify matches
 - [x] 9. End-to-end test — ship gate
+
+# V2 Build Order
+
+## Phase 2a (no blockers)
+
+- [ ] Incident triage — auto-classify priority, severity, issue type, team
+- [ ] Full resolve/close workflow — status field (open/in_progress/resolved/closed)
+
