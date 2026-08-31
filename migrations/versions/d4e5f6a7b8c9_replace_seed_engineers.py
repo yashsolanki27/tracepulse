@@ -1,7 +1,7 @@
-"""engineers table + ticket assignment
+"""replace seed engineers with new roster
 
-Revision ID: c3d4e5f6a7b8
-Revises: b2c3d4e5f6a7
+Revision ID: d4e5f6a7b8c9
+Revises: c3d4e5f6a7b8
 Create Date: 2026-08-31
 """
 from typing import Sequence, Union
@@ -9,12 +9,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-
-# revision identifiers, used by Alembic.
-revision: str = 'c3d4e5f6a7b8'
-down_revision: Union[str, Sequence[str], None] = 'b2c3d4e5f6a7'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
 
 SEED_ENGINEERS = [
     {"name": "Brad Hawk", "email": "brad.hawk@tracepulse.dev", "slack_handle": "@brad.hawk"},
@@ -39,20 +33,17 @@ SEED_ENGINEERS = [
 ]
 
 
+# revision identifiers, used by Alembic.
+revision: str = 'd4e5f6a7b8c9'
+down_revision: Union[str, Sequence[str], None] = 'c3d4e5f6a7b8'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+OLD_SEED_NAMES = ["Alice Chen", "Bob Verma", "Carol Diaz"]
+
+
 def upgrade() -> None:
-    op.create_table(
-        "engineers",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("name", sa.String(), nullable=False),
-        sa.Column("email", sa.String(), nullable=True),
-        sa.Column("slack_handle", sa.String(), nullable=True),
-        sa.Column("active", sa.Boolean(), nullable=False, server_default=sa.true()),
-    )
-    op.add_column(
-        "tickets",
-        sa.Column("assigned_engineer_id", sa.Integer(), sa.ForeignKey("engineers.id"), nullable=True),
-    )
-    # Minimal seed data so there is something to assign to for testing.
     engineers = sa.table(
         "engineers",
         sa.column("name", sa.String),
@@ -60,9 +51,32 @@ def upgrade() -> None:
         sa.column("slack_handle", sa.String),
         sa.column("active", sa.Boolean),
     )
-    op.bulk_insert(engineers, [dict(e, active=True) for e in SEED_ENGINEERS])
+    # Deactivate the original 3 seed engineers. They are NOT deleted so any
+    # tickets already assigned to them keep their foreign key intact; the API
+    # only lists/assigns active engineers.
+    op.execute(
+        engineers.update().where(engineers.c.name.in_(OLD_SEED_NAMES)).values(active=False)
+    )
+    # Idempotent: only insert names that don't already exist.
+    conn = op.get_bind()
+    existing = {row[0] for row in conn.execute(sa.select(engineers.c.name))}
+    op.bulk_insert(
+        engineers,
+        [dict(e, active=True) for e in SEED_ENGINEERS if e["name"] not in existing],
+    )
 
 
 def downgrade() -> None:
-    op.drop_column("tickets", "assigned_engineer_id")
-    op.drop_table("engineers")
+    engineers = sa.table(
+        "engineers",
+        sa.column("name", sa.String),
+        sa.column("active", sa.Boolean),
+    )
+    conn = op.get_bind()
+    new_names = [e["name"] for e in SEED_ENGINEERS]
+    conn.execute(
+        engineers.delete().where(sa.and_(engineers.c.name.in_(new_names), engineers.c.active.is_(True)))
+    )
+    op.execute(
+        engineers.update().where(engineers.c.name.in_(OLD_SEED_NAMES)).values(active=True)
+    )
