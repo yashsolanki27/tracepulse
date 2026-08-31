@@ -38,6 +38,8 @@ class TicketResponse(BaseModel):
     ai_severity: str | None
     issue_type: str | None
     team: str | None
+    target_resolution_time: datetime | None
+    sla_status: str | None
 
     model_config = {"from_attributes": True}
 

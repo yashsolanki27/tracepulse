@@ -19,6 +19,7 @@ from schemas import (
 from embeddings import embed_ticket
 from rca import analyze_ticket
 from similarity import find_similar
+from sla import compute_deadline
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 
@@ -44,6 +45,7 @@ def create_ticket(payload: TicketCreate, db: Session = Depends(get_db), _key: No
         db.refresh(ticket)
 
     ticket.embedding = embed_ticket(payload.title, payload.description)
+    ticket.target_resolution_time = compute_deadline(ticket.created_at, ticket.priority)
     db.commit()
     db.refresh(ticket)
     return ticket

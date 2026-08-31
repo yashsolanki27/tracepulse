@@ -37,6 +37,8 @@ class Ticket(Base):
         default="open",
         server_default="open",
     )
+    target_resolution_time = Column(DateTime(timezone=True), nullable=True)
+    sla_status = Column(String, nullable=True)  # null / warning / breached
     resolution_text = Column(Text, nullable=True)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     embedding = Column(Vector(384), nullable=True)

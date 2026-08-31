@@ -17,3 +17,8 @@
 - [x] Incident triage — auto-classify priority, severity, issue type, team
 - [x] Full resolve/close workflow — status field (open/in_progress/resolved/closed)
 
+## Phase 2b
+
+- [x] SLA clock: start SLA clock + deadline on ticket creation
+- [x] SLA monitoring & escalation: scheduled job checks tickets nearing/breaching deadline, flags status
+
