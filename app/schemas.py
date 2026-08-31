@@ -36,6 +36,19 @@ class TicketResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SimilarIncident(BaseModel):
+    ticket_id: int
+    title: str
+    root_cause: str | None
+    resolution_text: str | None
+    similarity: float
+
+
+class TicketDetail(TicketResponse):
+    embedding: list[float] | None
+    similar_incidents: list[SimilarIncident] = []
+
+
 class TicketResolve(BaseModel):
     resolution_text: str = Field(..., min_length=1)
 
