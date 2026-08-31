@@ -27,3 +27,8 @@
 - [x] Engineer assignment: new engineer/user table, assign ticket to engineer
 - [x] Notification: notify assigned engineer via Slack webhook
 
+## Phase 2d
+
+- [x] Frontend scaffold: React (Vite) app, connects to TracePulse API (scaffold + API wiring done; UI pending)
+- [ ] Dashboard views: unified ticket view with SLA/RCA/AI/similar/actions
+

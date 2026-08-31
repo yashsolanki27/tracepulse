@@ -23,5 +23,15 @@ services:
     depends_on:
       - db
 
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - api
+
 volumes:
   pgdata:
