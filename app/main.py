@@ -13,8 +13,15 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Frontend dev-server origin (Phase 2d). Explicit allowlist, no wildcard.
-CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+# Frontend origins (Phase 2d). Env-configurable for Railway (comma-separated
+# CORS_ORIGINS); defaults to the local Vite dev server.
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
 
 from database import engine
 from email_ingest import poll_inbox
@@ -22,6 +29,23 @@ from models import Base
 from routers import engineers, tickets
 from sla import check_slas
 
+
+def _ensure_pgvector() -> None:
+    """Create the vector extension if missing (Railway pgvector template)."""
+    from sqlalchemy import text
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            conn.commit()
+    except Exception:
+        logging.getLogger("tracepulse.db").warning(
+            "Could not CREATE EXTENSION vector (may already exist or be managed externally)",
+            exc_info=True,
+        )
+
+
+_ensure_pgvector()
 Base.metadata.create_all(bind=engine)
 
 scheduler = BackgroundScheduler(timezone="UTC")

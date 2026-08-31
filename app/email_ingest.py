@@ -72,6 +72,9 @@ def extract_title_description(msg: Message) -> tuple[str, str]:
     description = first text/plain part; if none, text/html with tags stripped.
     """
     title = _decode_header(msg.get("Subject")) or "(no subject)"
+    # Email clients hard-wrap long subjects with CRLF + leading whitespace;
+    # collapse all whitespace runs so ticket titles are single-line.
+    title = " ".join(title.split())
 
     description = ""
     if msg.is_multipart():
@@ -111,7 +114,10 @@ def create_ticket_from_mail(title: str, description: str) -> int | None:
     Returns the new ticket id, or None on failure (logged, never raised —
     one bad email must never break the poller).
     """
-    base_url = os.getenv("TRACEPULSE_API_URL", "http://localhost:8000").rstrip("/")
+    base_url = os.getenv(
+        "TRACEPULSE_API_URL",
+        f"http://localhost:{os.getenv('PORT', '8000')}",
+    ).rstrip("/")
     api_key = os.getenv("TRACEPULSE_API_KEY", "")
     body = json.dumps(
         {"title": title, "description": description, "logs": description}

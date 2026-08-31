@@ -60,6 +60,26 @@ class TestExtractTitleDescription(unittest.TestCase):
         title, _ = email_ingest.extract_title_description(msg)
         self.assertEqual(title, "café outage")
 
+    def test_wrapped_subject_normalized(self):
+        # Email clients hard-wrap long subjects with CRLF + leading spaces.
+        raw = (
+            b"From: user@example.com\r\n"
+            b"To: support@tracepulse.dev\r\n"
+            b"Subject: Production database became unreachable at approximately\r\n"
+            b" 14:20 UTC. API requests are failing with timeout errors.\r\n"
+            b"Content-Type: text/plain; charset=utf-8\r\n\r\n"
+            b"body\r\n"
+        )
+        msg = email_ingest.email.message_from_bytes(raw)
+        title, _ = email_ingest.extract_title_description(msg)
+        self.assertNotIn("\r", title)
+        self.assertNotIn("\n", title)
+        self.assertEqual(
+            title,
+            "Production database became unreachable at approximately"
+            " 14:20 UTC. API requests are failing with timeout errors.",
+        )
+
     def test_missing_subject_fallback(self):
         raw = make_simple_mail("x", "body")
         msg = email_ingest.email.message_from_bytes(raw)
