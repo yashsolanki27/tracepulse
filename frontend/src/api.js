@@ -23,6 +23,7 @@ async function request(path, options = {}) {
 
 export const listTickets = () => request("/tickets");
 export const getTicket = (id) => request(`/tickets/${id}`);
+export const listEngineers = () => request("/engineers");
 export const assignTicket = (id, engineerId) =>
   request(`/tickets/${id}/assign`, {
     method: "PATCH",

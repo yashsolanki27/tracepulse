@@ -49,6 +49,16 @@ class TicketAssign(BaseModel):
     engineer_id: int
 
 
+class EngineerResponse(BaseModel):
+    id: int
+    name: str
+    email: str | None
+    slack_handle: str | None
+    active: bool
+
+    model_config = {"from_attributes": True}
+
+
 class SimilarIncident(BaseModel):
     ticket_id: int
     title: str

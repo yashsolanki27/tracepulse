@@ -17,7 +17,7 @@ CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
 from database import engine
 from models import Base
-from routers import tickets
+from routers import engineers, tickets
 from sla import check_slas
 
 Base.metadata.create_all(bind=engine)
@@ -53,3 +53,4 @@ app.add_middleware(
     allow_headers=["X-API-Key", "Content-Type"],
 )
 app.include_router(tickets.router)
+app.include_router(engineers.router)
