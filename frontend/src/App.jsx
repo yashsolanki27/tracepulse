@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import {
   assignTicket, getTicket, listEngineers, listTickets, resolveTicket, updateTicketStatus,
@@ -34,8 +34,8 @@ function App() {
 
   const engineerName = (id) =>
     engineers.length
-      ? engineers.find((e) => e.id === id)?.name ?? 'â€”'
-      : id ?? 'â€”'
+      ? engineers.find((e) => e.id === id)?.name ?? '—'
+      : id ?? '—'
 
   const refreshList = useCallback(async () => {
     try {
@@ -111,8 +111,8 @@ return (
         .app { max-width: 1200px; margin: 0 auto; padding: 24px; font-family: system-ui, sans-serif; }
         h1, h2 { color: #111; }
         .loading { color: #555; padding: 24px; }
-        .error { background: #fdecea; border: 1px solid #f5c6c7; color: #b3261e; padding: 10px 12px; border-radius:  â€Ž6px; margin:  â€Ž12px 0; }
-        .banner { background: #eef4ff; border:  â€Ž1px solid #b8d4ff; color: #1a56a8; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
+        .error { background: #fdecea; border: 1px solid #f5c6c7; color: #b3261e; padding: 10px 12px; border-radius:  6px; margin:  12px 0; }
+        .banner { background: #eef4ff; border:  1px solid #b8d4ff; color: #1a56a8; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
         table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.08); border-radius: 8px; overflow: hidden; }
         th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
         th { background: #fafbfc; color: #555; font-weight: 600; }
