@@ -1,4 +1,6 @@
 .env
 __pycache__/
 .venv/
-*.pyc
+*.pyc*.log
+*_resp.json
+get*.json
