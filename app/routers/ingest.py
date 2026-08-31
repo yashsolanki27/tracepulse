@@ -46,7 +46,8 @@ _SOURCES = {"alertmanager", "reconciliation", "newman", "email", "other"}
 
 
 class TriageResult(BaseModel):
-    triage_id: str | None = None
+    # LogPulse sends a numeric triage id; accept int or str and normalize.
+    triage_id: int | str | None = None
     category: str | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
 
