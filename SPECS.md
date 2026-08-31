@@ -32,3 +32,8 @@
 - [x] Frontend scaffold: React (Vite) app, connects to TracePulse API (scaffold + API wiring done; UI pending)
 - [x] Dashboard views: unified ticket view with SLA/RCA/AI/similar/actions
 
+## Phase 2e
+
+- [ ] Email ingestion: IMAP listener extracts title/description from
+  incoming mail, calls existing POST /tickets
+
