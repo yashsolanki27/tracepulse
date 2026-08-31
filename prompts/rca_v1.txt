@@ -7,17 +7,24 @@ Analyze the incident and determine:
 - the evidence in the logs or description that supports that root cause
 - the functional area the issue belongs to (e.g. database, network, authentication, memory, disk, application code, configuration, third-party service)
 - a suggested resolution or next step
+- the triage classification: priority, severity, issue type, and suggested owning team
 
-Respond with ONLY a single JSON object with exactly these four keys and no others:
+Respond with ONLY a single JSON object with exactly these eight keys and no others:
 
 {
   "root_cause": "<one or two sentence explanation of the root cause>",
   "evidence": "<the specific log lines or description details that support the root cause>",
   "issue_area": "<short category name, e.g. database, network, memory>",
-  "suggested_resolution": "<concrete suggested fix or next investigative step>"
+  "suggested_resolution": "<concrete suggested fix or next investigative step>",
+  "priority": "<one of: low, medium, high, critical>",
+  "severity": "<one of: minor, major, critical, blocker>",
+  "issue_type": "<short type, e.g. bug, outage, performance, configuration, security, capacity>",
+  "team": "<suggested owning team, e.g. backend, frontend, infrastructure, database, security, devops>"
 }
 
 Rules:
 - Output raw JSON only. No markdown, no code fences, no prose before or after the JSON.
 - Every value must be a plain string.
+- priority must be exactly one of: low, medium, high, critical.
+- severity must be exactly one of: minor, major, critical, blocker.
 - If the information is insufficient, make the best-supported inference from the available evidence rather than refusing.

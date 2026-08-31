@@ -11,6 +11,28 @@ TIMEOUT_SECONDS = 10
 PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "rca_v1.txt")
 
 RCA_KEYS = ("root_cause", "evidence", "issue_area", "suggested_resolution")
+TRIAGE_KEYS = ("priority", "severity", "issue_type", "team")
+TRIAGE_ALLOWED = {
+    "priority": {"low", "medium", "high", "critical"},
+    "severity": {"minor", "major", "critical", "blocker"},
+}
+
+
+def _clean_triage(data: dict) -> dict:
+    """Normalize triage fields; drop any that are missing/invalid (fail-safe to null)."""
+    out = {}
+    for key in TRIAGE_KEYS:
+        value = data.get(key)
+        if isinstance(value, str):
+            value = value.strip().lower()
+            allowed = TRIAGE_ALLOWED.get(key)
+            if allowed is not None and value not in allowed:
+                logger.warning("Triage: invalid %s=%r, ignoring", key, value)
+                value = None
+            out[key] = value or None
+        else:
+            out[key] = None
+    return out
 
 
 def _system_prompt() -> str:
@@ -43,7 +65,9 @@ def analyze_ticket(title: str, description: str, logs: str) -> dict | None:
             )
             data = json.loads(response.choices[0].message.content)
             if all(isinstance(data.get(k), str) and data[k].strip() for k in RCA_KEYS):
-                return {k: data[k] for k in RCA_KEYS}
+                result = {k: data[k] for k in RCA_KEYS}
+                result.update(_clean_triage(data))
+                return result
             logger.warning("RCA attempt %d: unexpected JSON shape, keys=%s", attempt, sorted(data))
         except (json.JSONDecodeError, KeyError, OpenAIError, TimeoutError) as exc:
             logger.warning("RCA attempt %d failed: %s", attempt, exc)

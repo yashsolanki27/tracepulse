@@ -14,6 +14,6 @@
 
 ## Phase 2a (no blockers)
 
-- [ ] Incident triage — auto-classify priority, severity, issue type, team
-- [ ] Full resolve/close workflow — status field (open/in_progress/resolved/closed)
+- [x] Incident triage — auto-classify priority, severity, issue type, team
+- [x] Full resolve/close workflow — status field (open/in_progress/resolved/closed)
 

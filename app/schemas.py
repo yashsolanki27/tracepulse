@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -32,6 +33,11 @@ class TicketResponse(BaseModel):
     suggested_resolution: str | None
     resolution_text: str | None
     resolved_at: datetime | None
+    status: str
+    priority: str | None
+    ai_severity: str | None
+    issue_type: str | None
+    team: str | None
 
     model_config = {"from_attributes": True}
 
@@ -58,3 +64,19 @@ class TicketResolve(BaseModel):
         if isinstance(v, str) and not v.strip():
             raise ValueError("must not be empty or whitespace-only")
         return v.strip() if isinstance(v, str) else v
+
+
+VALID_STATUSES = ("open", "in_progress", "resolved", "closed")
+
+# Simple state machine: closed is terminal; resolved may only close or go back
+# to in_progress; open/in_progress may move freely among open/in_progress/resolved/closed.
+ALLOWED_TRANSITIONS = {
+    "open": {"open", "in_progress", "resolved", "closed"},
+    "in_progress": {"open", "in_progress", "resolved", "closed"},
+    "resolved": {"closed", "in_progress"},
+    "closed": set(),
+}
+
+
+class TicketStatusUpdate(BaseModel):
+    status: Literal["open", "in_progress", "resolved", "closed"]
