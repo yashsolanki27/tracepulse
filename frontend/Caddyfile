@@ -1,0 +1,27 @@
+# {$SITE_ADDRESS} defaults to :80 (plain HTTP on the VM's public IP).
+# Set SITE_ADDRESS=your.domain.com in the environment and Caddy will
+# automatically provision Let's Encrypt certificates.
+{$SITE_ADDRESS} {
+	encode gzip
+
+	# API: /api/* -> api:8000 (prefix stripped).
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy api:8000
+	}
+
+	# Keep FastAPI's interactive docs reachable.
+	handle /docs* {
+		reverse_proxy api:8000
+	}
+	handle /openapi.json {
+		reverse_proxy api:8000
+	}
+
+	# Static SPA frontend with history-mode fallback.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

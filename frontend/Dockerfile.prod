@@ -1,0 +1,25 @@
+# Multi-stage prod image: build the Vite frontend, then serve the static
+# bundle with Caddy (which also reverse-proxies /api to the api service).
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+COPY package.json ./
+RUN npm install
+
+COPY . .
+
+# Vite bakes these in at build time. Base URL is the same-origin /api prefix
+# handled by the Caddyfile, so no CORS is involved.
+ARG VITE_API_BASE_URL=/api
+ARG VITE_API_KEY
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
+    VITE_API_KEY=$VITE_API_KEY
+RUN npm run build
+
+FROM caddy:2-alpine
+
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/dist /srv
+
+EXPOSE 80 443

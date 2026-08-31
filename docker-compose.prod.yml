@@ -1,0 +1,55 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: always
+    # No host port binding: db is internal-only (reachable via the compose network).
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tracepulse
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tracepulse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./app
+    restart: always
+    # Fixed host port, loopback-only (Caddy is the public entrypoint).
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  caddy:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        # Frontend talks to the API same-origin via Caddy's /api prefix.
+        VITE_API_BASE_URL: /api
+        VITE_API_KEY: ${TRACEPULSE_API_KEY}
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Set to your domain (e.g. tracepulse.example.com) for automatic
+      # Let's Encrypt HTTPS; leave unset to serve plain HTTP on :80.
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
