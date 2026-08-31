@@ -143,7 +143,7 @@ return (
         .sim-score { color: #1a56a8; font-weight: 600; }
         .empty { color: #888; padding: 24px; }
       `}</style>
-      <h1>TracePulse â€” Incident Dashboard</h1>
+      <h1>TracePulse AI — Incident Dashboard</h1>
       {actionMsg && <div className="banner">OK {actionMsg}</div>}
       {error && <div className="error">ERROR {error}</div>}
 {loading ? (
