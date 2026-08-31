@@ -7,5 +7,5 @@
 - [x] 5. Wire RCA (gpt-oss-120b, 10s timeout, retry once, null-on-fail, logging)
 - [x] 6. Wire similarity search
 - [x] 7. Resolve endpoint
-- [ ] 8. Seed script, verify matches
+- [x] 8. Seed script, verify matches
 - [ ] 9. End-to-end test — ship gate
