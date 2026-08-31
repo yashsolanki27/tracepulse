@@ -40,8 +40,13 @@ class TicketResponse(BaseModel):
     team: str | None
     target_resolution_time: datetime | None
     sla_status: str | None
+    assigned_engineer_id: int | None
 
     model_config = {"from_attributes": True}
+
+
+class TicketAssign(BaseModel):
+    engineer_id: int
 
 
 class SimilarIncident(BaseModel):

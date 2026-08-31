@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 
 from auth import verify_api_key
 from database import get_db
-from models import Ticket
+from models import Engineer, Ticket
+from notifications import notify_assignment
 from schemas import (
     ALLOWED_TRANSITIONS,
     SimilarIncident,
+    TicketAssign,
     TicketCreate,
     TicketDetail,
     TicketResolve,
@@ -88,6 +90,28 @@ def resolve_ticket(ticket_id: int, payload: TicketResolve, db: Session = Depends
     ticket.status = "resolved"
     db.commit()
     db.refresh(ticket)
+    return ticket
+
+
+@router.patch("/{ticket_id}/assign", response_model=TicketResponse)
+def assign_ticket(
+    ticket_id: int, payload: TicketAssign, db: Session = Depends(get_db), _key: None = Depends(verify_api_key)
+):
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    engineer = db.query(Engineer).filter(Engineer.id == payload.engineer_id).first()
+    if not engineer:
+        raise HTTPException(status_code=404, detail="Engineer not found")
+    if not engineer.active:
+        raise HTTPException(status_code=409, detail="Engineer is not active")
+
+    ticket.assigned_engineer_id = engineer.id
+    db.commit()
+    db.refresh(ticket)
+
+    # Fail-safe: notification problems must never fail the assignment.
+    notify_assignment(ticket.id, ticket.title, ticket.priority, engineer.name)
     return ticket
 
 

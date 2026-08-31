@@ -22,3 +22,8 @@
 - [x] SLA clock: start SLA clock + deadline on ticket creation
 - [x] SLA monitoring & escalation: scheduled job checks tickets nearing/breaching deadline, flags status
 
+## Phase 2c
+
+- [x] Engineer assignment: new engineer/user table, assign ticket to engineer
+- [x] Notification: notify assigned engineer via Slack webhook
+

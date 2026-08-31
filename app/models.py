@@ -1,12 +1,23 @@
 from datetime import datetime, timezone
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, true
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
     pass
+
+
+class Engineer(Base):
+    __tablename__ = "engineers"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=True)
+    slack_handle = Column(String, nullable=True)
+    active = Column(Boolean, nullable=False, default=True, server_default=true())
 
 
 class Ticket(Base):
@@ -39,6 +50,7 @@ class Ticket(Base):
     )
     target_resolution_time = Column(DateTime(timezone=True), nullable=True)
     sla_status = Column(String, nullable=True)  # null / warning / breached
+    assigned_engineer_id = Column(Integer, ForeignKey("engineers.id"), nullable=True)
     resolution_text = Column(Text, nullable=True)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     embedding = Column(Vector(384), nullable=True)
