@@ -3,10 +3,12 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.auth import verify_api_key
-from app.database import get_db
-from app.models import Ticket
-from app.schemas import TicketCreate, TicketResolve, TicketResponse
+from auth import verify_api_key
+from database import get_db
+from models import Ticket
+from schemas import TicketCreate, TicketResolve, TicketResponse
+
+from rca import analyze_ticket
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 
@@ -17,6 +19,15 @@ def create_ticket(payload: TicketCreate, db: Session = Depends(get_db), _key: No
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
+
+    rca = analyze_ticket(payload.title, payload.description, payload.logs)
+    if rca:
+        ticket.root_cause = rca["root_cause"]
+        ticket.evidence = rca["evidence"]
+        ticket.issue_area = rca["issue_area"]
+        ticket.suggested_resolution = rca["suggested_resolution"]
+        db.commit()
+        db.refresh(ticket)
     return ticket
 
 
