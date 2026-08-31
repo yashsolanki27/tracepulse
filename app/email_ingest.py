@@ -113,7 +113,9 @@ def create_ticket_from_mail(title: str, description: str) -> int | None:
     """
     base_url = os.getenv("TRACEPULSE_API_URL", "http://localhost:8000").rstrip("/")
     api_key = os.getenv("TRACEPULSE_API_KEY", "")
-    body = json.dumps({"title": title, "description": description}).encode()
+    body = json.dumps(
+        {"title": title, "description": description, "logs": description}
+    ).encode()
     req = urllib.request.Request(
         f"{base_url}/tickets",
         data=body,
@@ -121,12 +123,14 @@ def create_ticket_from_mail(title: str, description: str) -> int | None:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        # Ticket creation runs the full pipeline (Groq RCA + embedding) which
+        # can take well over 30s — give it 3 minutes.
+        with urllib.request.urlopen(req, timeout=180) as resp:
             ticket = json.loads(resp.read())
             ticket_id = ticket.get("id")
             logger.info("Email created ticket id=%s title=%r", ticket_id, title)
             return ticket_id
-    except (urllib.error.URLError, ValueError, KeyError) as exc:
+    except (urllib.error.URLError, TimeoutError, ValueError, KeyError) as exc:
         logger.error("Failed to create ticket from email (title=%r): %s", title, exc)
         return None
 

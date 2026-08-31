@@ -98,7 +98,10 @@ class TestCreateTicketFromMail(unittest.TestCase):
 
         self.assertEqual(ticket_id, 42)
         self.assertEqual(captured["url"], "http://api:8000/tickets")
-        self.assertEqual(captured["body"], {"title": "API down", "description": "5xx on /v1/orders"})
+        self.assertEqual(
+            captured["body"],
+            {"title": "API down", "description": "5xx on /v1/orders", "logs": "5xx on /v1/orders"},
+        )
         headers = {k.lower(): v for k, v in captured["headers"].items()}
         self.assertEqual(headers.get("x-api-key"), "k-123")
 
