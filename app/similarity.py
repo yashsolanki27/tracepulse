@@ -12,7 +12,11 @@ def find_similar(db, ticket: Ticket, limit: int = 5) -> list[tuple[Ticket, float
     distance = Ticket.embedding.cosine_distance(ticket.embedding).label("distance")
     rows = (
         db.query(Ticket, distance)
-        .filter(Ticket.resolution_text.isnot(None), Ticket.id != ticket.id)
+        .filter(
+            Ticket.resolution_text.isnot(None),
+            Ticket.embedding.isnot(None),  # NULL vectors make <=> return NULL
+            Ticket.id != ticket.id,
+        )
         .order_by(distance)
         .limit(limit)
         .all()
