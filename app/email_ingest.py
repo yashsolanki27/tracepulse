@@ -29,9 +29,56 @@ import urllib.error
 import urllib.request
 from email.message import Message
 
+from html.parser import HTMLParser
+
 logger = logging.getLogger("tracepulse.email")
 
 MAX_DESCRIPTION_LEN = 10_000
+
+LOOP_SUBJECT_TAG = "[TracePulse]"
+
+
+class _HTMLToText(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self._chunks: list[str] = []
+
+    def handle_data(self, data):
+        self._chunks.append(data)
+
+    def text(self) -> str:
+        return " ".join("".join(self._chunks).split())
+
+
+def body_text_from_message(msg) -> str:
+    """Plain text from email.message.Message: prefers text/plain,
+    falls back to HTML with tags stripped. Whitespace-normalized."""
+    if msg.is_multipart():
+        plain = html = None
+        for part in msg.walk():
+            ctype = part.get_content_type()
+            if ctype == "text/plain" and plain is None:
+                plain = part.get_payload(decode=True)
+            elif ctype == "text/html" and html is None:
+                html = part.get_payload(decode=True)
+        payload = plain if plain is not None else html
+        ctype = "text/plain" if plain is not None else "text/html"
+    else:
+        payload = msg.get_payload(decode=True)
+        ctype = msg.get_content_type()
+    if payload is None:
+        return ""
+    text = payload.decode(msg.get_content_charset() or "utf-8", errors="replace")
+    if ctype == "text/html":
+        parser = _HTMLToText()
+        parser.feed(text)
+        return parser.text()
+    return text.strip()
+
+
+def should_skip_subject(subject: str) -> bool:
+    """Skip our own notification mail so ingest never loops on itself."""
+    return LOOP_SUBJECT_TAG in (subject or "")
 
 
 def _decode_header(value: str | None) -> str:
@@ -181,6 +228,12 @@ def _poll_inbox_inner() -> None:
             raw = msg_data[0][1]
             msg = email.message_from_bytes(raw)
             title, description = extract_title_description(msg)
+            if should_skip_subject(title):
+                # Our own notification mail — never create a ticket from it,
+                # otherwise ingest would loop on itself. Mark seen and skip.
+                logger.info("Skipping email id=%s: own notification (title=%r)", mail_id, title)
+                conn.store(mail_id, "+FLAGS", "\\Seen")
+                continue
             if not description:
                 logger.warning("Skipping email id=%s: empty body (title=%r)", mail_id, title)
                 # Mark seen anyway so we never loop on it forever.
