@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import {
-  assignTicket, getTicket, listEngineers, listTickets, resolveTicket, updateTicketStatus,
+  assignTicket, createTicket, getTicket, listEngineers, listTickets, resolveTicket, updateTicketStatus,
 } from './api'
 
 // Mirrors the 2a state machine in app/schemas.py: keys =current status, closed=terminal.
@@ -31,6 +31,8 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 	const [actionMsg, setActionMsg] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ title: '', description: '', logs: '', system: '' })
 
   const engineerName = (id) =>
     engineers.length
@@ -101,6 +103,23 @@ function App() {
     }
 	}
 
+  const doCreate = async (e) => {
+    e.preventDefault()
+    try {
+      const t = await createTicket({
+        title: form.title, description: form.description,
+        logs: form.logs, system: form.system || null,
+      })
+      setActionMsg(`Created #${t.id}`)
+      setForm({ title: '', description: '', logs: '', system: '' })
+      setShowForm(false)
+      await refreshList()
+      selectTicket(t.id)
+    } catch (err) {
+      setError(`Create failed: ${err.message}`)
+    }
+  }
+
   useEffect(() => { refreshList() }, [refreshList])
 
   const d = detail
@@ -142,6 +161,10 @@ return (
         .sim li { margin: 4px 0; }
         .sim-score { color: #1a56a8; font-weight: 600; }
         .empty { color: #888; padding: 24px; }
+        .new-ticket { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 16px; }
+        .new-ticket input, .new-ticket textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font: inherit; font-size: 13px; box-sizing: border-box; }
+        .new-ticket button.primary { align-self: flex-start; padding: 6px 14px; border-radius: 6px; border: 1px solid #1a56a8; background: #1a56a8; color: #fff; cursor: pointer; }
+        h2 button { margin-left: 8px; padding: 4px 10px; border-radius: 6px; border: 1px solid #ccc; background: #fff; font-size: 12px; cursor: pointer; }
       `}</style>
       <h1>TracePulse AI — Incident Dashboard</h1>
       {actionMsg && <div className="banner">OK {actionMsg}</div>}
@@ -153,7 +176,26 @@ return (
       ) : (
         <div className="layout">
           <section>
-            <h2>Tickets ({tickets ? tickets.length : 0})</h2>
+            <h2>
+              Tickets ({tickets ? tickets.length : 0})
+              {' '}
+              <button onClick={() => setShowForm((v) => !v)}>
+                {showForm ? 'Cancel' : '+ New Ticket'}
+              </button>
+            </h2>
+            {showForm && (
+              <form className="new-ticket" onSubmit={doCreate}>
+                <input required placeholder="Title" value={form.title}
+                       onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                <textarea required placeholder="Description" rows={2} value={form.description}
+                          onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <textarea required placeholder="Logs" rows={3} value={form.logs}
+                          onChange={(e) => setForm({ ...form, logs: e.target.value })} />
+                <input placeholder="System (optional)" value={form.system}
+                       onChange={(e) => setForm({ ...form, system: e.target.value })} />
+                <button className="primary" type="submit">Create</button>
+              </form>
+            )}
             {tickets && tickets.length === 0 && <div className="empty">No tickets yet.</div>}
             <table>
               <thead>

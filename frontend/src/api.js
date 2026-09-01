@@ -40,4 +40,10 @@ export const resolveTicket = (id, resolutionText) =>
     body: JSON.stringify({ resolution_text: resolutionText }),
   });
 
+export const createTicket = (payload) =>
+  request("/tickets", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
 export default request;

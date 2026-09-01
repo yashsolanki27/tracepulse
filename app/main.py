@@ -93,7 +93,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET", "PATCH"],
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["X-API-Key", "Content-Type"],
 )
 app.include_router(tickets.router)
