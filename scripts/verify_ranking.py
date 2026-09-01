@@ -1,11 +1,33 @@
 """Phase 8 ranking verification: POST a new incident similar to the OOM seed
 cluster, then GET it back and print the ranked similar_incidents."""
 import json
+import os
 import urllib.error
 import urllib.request
 
-KEY = "f5e3dedede71bfc93cce84fa63fb0c5027442afc0dd4a00c6334f3d8fb98495e"
-BASE = "http://localhost:8001"
+BASE = os.getenv("TRACEPULSE_URL", "http://localhost:8001")
+
+
+def _load_api_key() -> str:
+    """Prefer TRACEPULSE_API_KEY from the repo .env, falling back to the
+    process env. Fail fast with a clear error when unset."""
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("TRACEPULSE_API_KEY="):
+                    return line.split("=", 1)[1].strip()
+    key = os.getenv("TRACEPULSE_API_KEY", "")
+    if not key:
+        raise SystemExit(
+            "ERROR: TRACEPULSE_API_KEY is not set.\n"
+            "Set it in the repo .env (TRACEPULSE_API_KEY=...) or export it "
+            "in your shell before running this script."
+        )
+    return key
+
+
+KEY = _load_api_key()
 
 NEW = {
     "title": "Report generator pod OOMKilled during nightly batch",
