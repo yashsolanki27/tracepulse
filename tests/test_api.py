@@ -76,3 +76,24 @@ def test_assign_flow(client, db_session):
     assert r.status_code == 200 and r.json()["assigned_engineer_id"] == eng.id
     assert client.patch(f"/tickets/{t['id']}/assign",
                         json={"engineer_id": 99999}).status_code == 404
+
+
+def test_list_filters_and_pagination(client):
+    client.post("/tickets", json=TICKET)
+    client.post("/tickets", json={**TICKET, "title": "Low prio"})
+    assert len(client.get("/tickets").json()) == 2
+    # priority comes from mocked triage = high
+    assert client.get("/tickets", params={"priority": "critical"}).json() == []
+    assert len(client.get("/tickets", params={"priority": "high"}).json()) == 2
+    assert len(client.get("/tickets", params={"limit": 1}).json()) == 1
+    assert len(client.get("/tickets", params={"limit": 1, "offset": 1}).json()) == 1
+    assert client.get("/tickets", params={"limit": 9999}).status_code == 422
+
+
+def test_list_filter_by_status(client):
+    t = client.post("/tickets", json=TICKET).json()
+    assert len(client.get("/tickets", params={"status": "open"}).json()) == 1
+    client.patch(f"/tickets/{t['id']}/resolve", json={"resolution_text": "fixed"})
+    assert client.get("/tickets", params={"status": "open"}).json() == []
+    assert len(client.get("/tickets", params={"status": "resolved"}).json()) == 1
+

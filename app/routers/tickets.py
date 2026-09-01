@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from auth import verify_api_key
@@ -76,8 +76,23 @@ def get_ticket(ticket_id: int, db: Session = Depends(get_db), _key: None = Depen
 
 
 @router.get("", response_model=list[TicketResponse])
-def list_tickets(db: Session = Depends(get_db), _key: None = Depends(verify_api_key)):
-    return db.query(Ticket).all()
+def list_tickets(
+    status: str | None = None,
+    priority: str | None = None,
+    sla_status: str | None = None,
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    _key: None = Depends(verify_api_key),
+):
+    q = db.query(Ticket)
+    if status:
+        q = q.filter(Ticket.status == status)
+    if priority:
+        q = q.filter(Ticket.priority == priority)
+    if sla_status:
+        q = q.filter(Ticket.sla_status == sla_status)
+    return q.order_by(Ticket.id.desc()).offset(offset).limit(limit).all()
 
 
 @router.patch("/{ticket_id}/resolve", response_model=TicketResponse)
