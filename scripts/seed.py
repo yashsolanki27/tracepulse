@@ -30,7 +30,14 @@ def _load_api_key() -> str:
             for line in f:
                 if line.strip().startswith("TRACEPULSE_API_KEY="):
                     return line.split("=", 1)[1].strip()
-    return os.getenv("TRACEPULSE_API_KEY", "f5e3dedede71bfc93cce84fa63fb0c5027442afc0dd4a00c6334f3d8fb98495e")
+    key = os.getenv("TRACEPULSE_API_KEY", "")
+    if not key:
+        raise SystemExit(
+            "ERROR: TRACEPULSE_API_KEY is not set.\n"
+            "Set it in the repo .env (TRACEPULSE_API_KEY=...) or export it "
+            "in your shell before running the seed script."
+        )
+    return key
 
 
 KEY = _load_api_key()
