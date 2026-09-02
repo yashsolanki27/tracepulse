@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from models import Ticket
+from models import Engineer, Ticket
+from notifications import notify_sla
 
 logger = logging.getLogger("tracepulse.sla")
 
@@ -66,6 +67,17 @@ def _check_slas_inner() -> None:
                 ticket.target_resolution_time.isoformat(), now.isoformat(),
             )
             ticket.sla_status = new_status
+            engineer = None
+            if ticket.assigned_engineer_id:
+                engineer = (
+                    session.query(Engineer)
+                    .filter(Engineer.id == ticket.assigned_engineer_id)
+                    .first()
+                )
+            notify_sla(
+                ticket.id, ticket.title, new_status,
+                engineer.name if engineer else None,
+            )
         session.commit()
     finally:
         session.close()

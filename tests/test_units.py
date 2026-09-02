@@ -183,6 +183,35 @@ class TestNotifications(unittest.TestCase):
             self.assertFalse(notifications.notify_assignment(1, "t", "high", "Eng"))
 
 
+class TestSlaNotify(unittest.TestCase):
+    def test_notify_sla_called_on_transition(self):
+        import sla
+        now = datetime.now(timezone.utc)
+        t = mock.Mock()
+        t.id = 7
+        t.title = "DB down"
+        t.sla_status = None
+        t.status = "open"
+        t.created_at = now - timedelta(hours=9)
+        t.target_resolution_time = now + timedelta(hours=1)
+        t.assigned_engineer_id = 1
+        eng = mock.Mock()
+        eng.name = "Dana"
+        # Adaptation vs brief: _check_slas_inner imports SessionLocal from
+        # `database` and or_ from `sqlalchemy` *inside the function*, so we
+        # patch at those source modules, not on `sla`. The real query chain is
+        # .query().filter().filter().filter().all() — three filters, not two.
+        # The engineer lookup reuses the shared .filter child mock's .first.
+        with mock.patch("database.SessionLocal") as s, \
+                mock.patch("sqlalchemy.or_", lambda *a: True), \
+                mock.patch("sla.notify_sla") as ns:
+            s.return_value.query.return_value.filter.return_value \
+                .filter.return_value.filter.return_value.all.return_value = [t]
+            s.return_value.query.return_value.filter.return_value.first.return_value = eng
+            sla.check_slas()
+        ns.assert_called_once_with(7, "DB down", "warning", "Dana")
+
+
 if __name__ == "__main__":
     unittest.main()
 
