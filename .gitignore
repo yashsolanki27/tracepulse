@@ -15,3 +15,6 @@ sla_*.json
 post_code.txt
 get_code.txt
 *_resp.json
+
+# Local-only compose port overrides (machine-specific, never commit)
+docker-compose.override.yml
