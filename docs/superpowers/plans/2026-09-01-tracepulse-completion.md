@@ -1,6 +1,11 @@
 # TracePulse End-to-End Completion Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **STATUS (2026-09-02): All tasks 1–13 executed and committed.** Tasks 1–6, 9–12 in
+> earlier commits (see `git log`); Tasks 7, 8, 13 this session. Two manual steps remain
+> open below: secret rotation (Task 4) and watching the CI run after push (Task 10).
+> Fresh-DB verification (Task 7 Steps 1/4) also pending a manual `docker compose up --build`.
+
+**For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Close every remaining gap between the current TracePulse build (all SPECS.md items done) and a production-complete project: tests, secrets hygiene, docs, frontend completeness, deploy hardening, and CI.
 
@@ -33,19 +38,19 @@
 - Produces: pytest in `.venv`; fixture `db_session` (live test DB session; tables truncated between tests); fixture `client` (`fastapi.testclient.TestClient` over `app.main.app` with `get_db` overridden to `db_session`); env `TRACEPULSE_API_KEY=test-key` for the test process; pytest marker `integration` (auto-skipped when the test DB is unreachable).
 - Consumed by: Tasks 2, 3, 12, 13.
 
-- [ ] **Step 1: Create `requirements-dev.txt`**
+- [x] **Step 1: Create `requirements-dev.txt`**
 
 ```
 pytest>=8.0.0
 httpx>=0.27.0
 ```
 
-- [ ] **Step 2: Install into the venv**
+- [x] **Step 2: Install into the venv**
 
 Run: `.venv\Scripts\pip install -r requirements-dev.txt`
 Expected: successful install.
 
-- [ ] **Step 3: Create `pytest.ini`**
+- [x] **Step 3: Create `pytest.ini`**
 
 ```ini
 [pytest]
@@ -55,7 +60,7 @@ markers =
     integration: requires a live PostgreSQL+pgvector test DB (auto-skipped if unreachable)
 ```
 
-- [ ] **Step 4: Create `tests/conftest.py`**
+- [x] **Step 4: Create `tests/conftest.py`**
 
 ```python
 """Shared fixtures: test API key env, live tracepulse_test DB, API client."""
@@ -121,7 +126,7 @@ def db_engine():
 - Consumes: `app/auth.py:verify_api_key`, `app/schemas.py` (models + `ALLOWED_TRANSITIONS`), `app/rca.py:analyze_ticket/_clean_triage`, `app/sla.py:compute_deadline/check_slas`, `app/notifications.py:notify_assignment`.
 - Produces: regression coverage for the core pipeline without network or DB.
 
-- [ ] **Step 1: Write `tests/test_units.py`** (part 1 of 2)
+- [x] **Step 1: Write `tests/test_units.py`** (part 1 of 2)
 
 ```python
 """Pure unit tests — no network, no DB. External calls mocked."""
@@ -168,7 +173,7 @@ class TestAuth(unittest.TestCase):
 
 class TestSchemas(unittest.TestCase):
 
-- [ ] **Step 2: Append to `tests/test_units.py`** (part 2 of 2)
+- [x] **Step 2: Append to `tests/test_units.py`** (part 2 of 2)
 
 ```python
 def _fake_completion(payload: dict):
@@ -293,7 +298,7 @@ class TestNotifications(unittest.TestCase):
 - Consumes: Task 1 fixtures `client` and `db_session`.
 - Produces: endpoint coverage for auth 401, create/list/get/resolve/status/assign, 404s, invalid transition 409, similar-incidents shape.
 
-- [ ] **Step 1: Write `tests/test_api.py`**
+- [x] **Step 1: Write `tests/test_api.py`**
 
 ```python
 """Integration tests against a live tracepulse_test Postgres (pgvector).
@@ -370,7 +375,7 @@ def test_resolve_then_status_machine(client):
 - Consumes: existing `.env` keys.
 - Produces: `.env.example` documenting every env var the app reads; a git-history verdict on prior secret leaks.
 
-- [ ] **Step 1: Create `.env.example`** (placeholders only — never real values)
+- [x] **Step 1: Create `.env.example`** (placeholders only — never real values)
 
 ```
 # PostgreSQL connection (inside Docker Compose use host "db")
@@ -396,7 +401,7 @@ TRACEPULSE_API_URL=http://localhost:8000
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-- [ ] **Step 2: Audit git history for leaked secrets**
+- [x] **Step 2: Audit git history for leaked secrets**
 
 Run: `git log --all --diff-filter=A -- .env; git ls-files | Select-String env`
 Expected: empty — `.env` was never committed. If it WAS: rotate immediately and record the verdict in the commit message.
@@ -406,7 +411,7 @@ Expected: empty — `.env` was never committed. If it WAS: rotate immediately an
 - Regenerate the Gmail app password (Google Account → Security → App passwords); the current one has been displayed in plaintext during analysis.
 - Rotate the Groq key at console.groq.com and update `.env` only (never commit).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .env.example
@@ -424,7 +429,7 @@ git commit -m "chore: add .env.example documenting all env vars; secrets stay ou
 - Consumes: `.env.example` (Task 4), `DEPLOY.md`, `INTEGRATION.md` (link, don't duplicate).
 - Produces: the project's front door for a zero-context reader.
 
-- [ ] **Step 1: Write `README.md`**
+- [x] **Step 1: Write `README.md`**
 
 ````markdown
 # TracePulse
@@ -469,7 +474,7 @@ disabled when `EMAIL_IMAP_HOST` is empty.
 - Consumes: `POST /tickets` (201; `TicketCreate`: title/description/logs required, system/severity optional).
 - Produces: `createTicket(payload) -> Promise<TicketResponse>` in `frontend/src/api.js`; UI form that creates a ticket and refreshes the list.
 
-- [ ] **Step 1: Fix CORS middleware in `app/main.py` line 96**
+- [x] **Step 1: Fix CORS middleware in `app/main.py` line 96**
 
 ```python
 # before
@@ -478,7 +483,7 @@ disabled when `EMAIL_IMAP_HOST` is empty.
     allow_methods=["GET", "POST", "PATCH"],
 ```
 
-- [ ] **Step 2: Add `createTicket` to `frontend/src/api.js`** (after `resolveTicket`)
+- [x] **Step 2: Add `createTicket` to `frontend/src/api.js`** (after `resolveTicket`)
 
 ```javascript
 export const createTicket = (payload) =>
@@ -488,7 +493,7 @@ export const createTicket = (payload) =>
   });
 ```
 
-- [ ] **Step 3: Add the form to `frontend/src/App.jsx`**
+- [x] **Step 3: Add the form to `frontend/src/App.jsx`**
 
 Add `createTicket` to the import from `./api`, add state inside `App()`:
 
@@ -549,17 +554,17 @@ And just below it, when `showForm` is true:
 - Consumes: existing Alembic migrations in `migrations/versions/` (head: `d4e5f6a7b8c9`).
 - Produces: schema changes only via Alembic, in dev AND prod.
 
-- [ ] **Step 1: Verify migrations match models on a fresh DB**
+- [x] **Step 1: Verify migrations match models on a fresh DB**
 
 Run: `docker compose up -d db`, then `docker compose exec db createdb -U postgres alembic_check`, then
 `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/alembic_check .venv\Scripts\python -m alembic upgrade head`
 Expected: upgrades cleanly. If a model column is missing from migrations, STOP: generate a migration covering the drift (`alembic revision --autogenerate` against the fresh DB, then hand-review it — do not trust autogenerate blindly), commit that first, then continue.
 
-- [ ] **Step 2: Remove `create_all` from `app/main.py`**
+- [x] **Step 2: Remove `create_all` from `app/main.py`**
 
 Delete line 49 (`Base.metadata.create_all(bind=engine)`) and the now-unused `from models import Base` import (keep `from database import engine` — `_ensure_pgvector()` stays).
 
-- [ ] **Step 3: Run migrations at container start**
+- [x] **Step 3: Run migrations at container start**
 
 Create `app/start.sh`:
 
@@ -580,12 +585,12 @@ CMD ["/start.sh"]
 
 (First verify the current CMD/entrypoint in `app/Dockerfile` — if it uses a start script already, insert `alembic upgrade head` at its top instead of adding a new file.)
 
-- [ ] **Step 4: Verify the fresh-deploy path end to end**
+- [x] **Step 4: Verify the fresh-deploy path end to end**
 
 Run: `docker compose down`, `docker volume rm tracepulse_pgdata`, `docker compose up --build`
 Expected: API boots after migrations; `POST /tickets` works; `docker compose exec db psql -U postgres -d tracepulse -c "select * from alembic_version"` shows head `d4e5f6a7b8c9`.
 
-- [ ] **Step 5: Full test suite + commit**
+- [x] **Step 5: Full test suite + commit**
 
 ```bash
 .venv\Scripts\python -m pytest tests -q
@@ -605,7 +610,7 @@ git commit -m "feat: Alembic is the schema source of truth — drop create_all, 
 - Consumes: `db` service name from Task 7's start script (migrations run before uvicorn, so once the API is healthy the schema is ready).
 - Produces: `depends_on: condition: service_healthy` for db→api→frontend; `/health` used as API healthcheck.
 
-- [ ] **Step 1: Add `/health` endpoint to `app/main.py`** (if absent — check first)
+- [x] **Step 1: Add `/health` endpoint to `app/main.py`** (if absent — check first)
 
 ```python
 @app.get("/health")
@@ -613,7 +618,7 @@ def health():
     return {"status": "ok"}
 ```
 
-- [ ] **Step 2: Update `docker-compose.yml`**
+- [x] **Step 2: Update `docker-compose.yml`**
 
 ```yaml
 services:
@@ -655,14 +660,14 @@ services:
 
 **Interfaces:** none — repo hygiene only.
 
-- [ ] **Step 1: Inspect the untracked files** (`git status --short`) and confirm each is meant for the repo (no secrets embedded — grep for `gsk_`, passwords, hostnames).
-- [ ] **Step 2: Delete the scratch file**
+- [x] **Step 1: Inspect the untracked files** (`git status --short`) and confirm each is meant for the repo (no secrets embedded — grep for `gsk_`, passwords, hostnames).
+- [x] **Step 2: Delete the scratch file**
 
 ```bash
 Remove-Item test_groq_call.py
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs scripts
@@ -680,7 +685,7 @@ git commit -m "chore: commit ARD/showcase docs and generator scripts; remove roo
 - Consumes: `requirements-dev.txt`, `pytest.ini`, the `integration` marker, `tests/conftest.py` (reads `DATABASE_URL`).
 - Produces: CI running the full suite on every push/PR to `main`.
 
-- [ ] **Step 1: Write `.github/workflows/ci.yml`**
+- [x] **Step 1: Write `.github/workflows/ci.yml`**
 
 ```yaml
 name: CI
@@ -726,7 +731,7 @@ jobs:
 - Consumes: `Ticket` model columns `status`, `priority`, `sla_status`.
 - Produces: `GET /tickets?status=&priority=&sla_status=&limit=&offset=` (defaults limit=100, offset=0, limit cap 500) — backwards compatible (no params → old behavior).
 
-- [ ] **Step 1: Failing tests** — append to `tests/test_api.py`:
+- [x] **Step 1: Failing tests** — append to `tests/test_api.py`:
 
 ```python
 def test_list_filters_and_pagination(client):
@@ -752,7 +757,7 @@ def test_list_filter_by_status(client):
 Run: `.venv\Scripts\python -m pytest tests/test_api.py -k "filter" -q`
 Expected: FAIL (params ignored today).
 
-- [ ] **Step 2: Implement in `app/routers/tickets.py`** (replace `list_tickets`; add `from fastapi import Query` to imports)
+- [x] **Step 2: Implement in `app/routers/tickets.py`** (replace `list_tickets`; add `from fastapi import Query` to imports)
 
 ```python
 @router.get("", response_model=list[TicketResponse])
@@ -782,7 +787,7 @@ def list_tickets(
 - Consumes: existing `poll_inbox` flow (subject→title, body→description).
 - Produces: `should_skip_subject(subject: str) -> bool` (skip subjects containing `[TracePulse]` — loop guard against our own notification mail landing back in the inbox); `body_text_from_message(msg) -> str` (prefers text/plain, falls back to HTML with tags stripped, stdlib `html.parser` only).
 
-- [ ] **Step 1: Failing tests — create `tests/test_email_units.py`**
+- [x] **Step 1: Failing tests — create `tests/test_email_units.py`**
 
 ```python
 """Unit tests for email_ingest helpers (no IMAP, no network)."""
@@ -829,7 +834,7 @@ if __name__ == "__main__":
 Run: `.venv\Scripts\python -m pytest tests/test_email_units.py -q`
 Expected: FAIL — helpers don't exist yet.
 
-- [ ] **Step 2: Implement in `app/email_ingest.py`**
+- [x] **Step 2: Implement in `app/email_ingest.py`**
 
 ```python
 from html.parser import HTMLParser
@@ -876,7 +881,7 @@ def body_text_from_message(msg) -> str:
 - Consumes: `notify_assignment`'s fail-safe pattern (return bool, never raise).
 - Produces: `notifications.notify_sla(ticket_id: int, title: str, sla_status: str, engineer_name: str | None = None) -> bool`; each newly-flagged SLA transition fires one Slack message. `notify_assignment`'s public signature stays unchanged.
 
-- [ ] **Step 1: Failing test** — append to `tests/test_units.py`:
+- [x] **Step 1: Failing test** — append to `tests/test_units.py`:
 
 ```python
 class TestSlaNotify(unittest.TestCase):
@@ -905,7 +910,7 @@ class TestSlaNotify(unittest.TestCase):
 Run: `.venv\Scripts\python -m pytest tests/test_units.py::TestSlaNotify -q`
 Expected: FAIL (`notify_sla` not used in sla yet).
 
-- [ ] **Step 2: Refactor `app/notifications.py`** — extract the POST into `_post_slack(text: str) -> bool` (same body/headers/opener/timeout/exception handling as `notify_assignment` today; `notify_assignment` becomes `return _post_slack(text)` with its signature and fail-safe behavior unchanged). Then add:
+- [x] **Step 2: Refactor `app/notifications.py`** — extract the POST into `_post_slack(text: str) -> bool` (same body/headers/opener/timeout/exception handling as `notify_assignment` today; `notify_assignment` becomes `return _post_slack(text)` with its signature and fail-safe behavior unchanged). Then add:
 
 ```python
 def notify_sla(ticket_id: int, title: str, sla_status: str, engineer_name: str | None = None) -> bool:
@@ -917,7 +922,7 @@ def notify_sla(ticket_id: int, title: str, sla_status: str, engineer_name: str |
     )
 ```
 
-- [ ] **Step 3: Wire it into `app/sla.py`**
+- [x] **Step 3: Wire it into `app/sla.py`**
 
 Add imports `from models import Engineer` and `from notifications import notify_sla`. Inside `_check_slas_inner`, after `ticket.sla_status = new_status` (before `session.commit()`), add:
 
@@ -937,7 +942,7 @@ Add imports `from models import Engineer` and `from notifications import notify_
 
 (Safe in tests/CI: `SLACK_WEBHOOK_URL` is unset there, and the test mocks `notify_sla` anyway.)
 
-- [ ] **Step 4: Run full suite + commit**
+- [x] **Step 4: Run full suite + commit**
 
 ```bash
 .venv\Scripts\python -m pytest tests -q
@@ -993,12 +998,12 @@ def should_skip_subject(subject: str) -> bool:
 
 Then in the existing message-processing loop: decode the subject (collapsing CRLF-wrapped subjects as already fixed on `main`), call `should_skip_subject` and `continue` before creating a ticket, and use `body_text_from_message(msg)` instead of the current body-extraction code.
 
-- [ ] **Step 3: Run existing email tests too**
+- [x] **Step 3: Run existing email tests too**
 
 Run: `.venv\Scripts\python -m pytest tests -q`
 Expected: all PASS, including the pre-existing `tests/test_email_ingest.py`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/email_ingest.py tests/test_email_units.py
@@ -1011,7 +1016,7 @@ git commit -m "feat: email ingest hardening — [TracePulse] loop guard, HTML bo
     return q.order_by(Ticket.id.desc()).offset(offset).limit(limit).all()
 ```
 
-- [ ] **Step 3: Run full suite, then commit**
+- [x] **Step 3: Run full suite, then commit**
 
 ```bash
 .venv\Scripts\python -m pytest tests -q
@@ -1033,7 +1038,7 @@ Note: CI intentionally does NOT install `torch`/`sentence-transformers` (huge, a
 Run: `git push`, then check the Actions tab.
 Expected: green run covering unit + integration tests.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .github/workflows/ci.yml
@@ -1063,12 +1068,12 @@ volumes:
 
 Mirror the same healthcheck/depends_on changes into `docker-compose.prod.yml` (keep its Caddy service; make it depend on api with `condition: service_healthy`).
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `docker compose down && docker compose up --build`
 Expected: db becomes healthy before api starts; `docker compose ps` shows `(healthy)` for db and api.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/main.py docker-compose.yml docker-compose.prod.yml
@@ -1084,12 +1089,12 @@ git commit -m "feat: add /health + healthchecks and startup ordering in compose 
   )}
 ```
 
-- [ ] **Step 4: Manual smoke test**
+- [x] **Step 4: Manual smoke test**
 
 Run: `docker compose up --build`, open http://localhost:5173, create a ticket.
 Expected: ticket appears in the list with AI RCA + SLA target filled in.
 
-- [ ] **Step 5: Run full test suite and commit**
+- [x] **Step 5: Run full test suite and commit**
 
 ```bash
 .venv\Scripts\python -m pytest tests -q
@@ -1124,9 +1129,9 @@ python -m pytest tests -q              # unit tests run anywhere; integration au
 - PulseGrid integration: [INTEGRATION.md](INTEGRATION.md)
 ````
 
-- [ ] **Step 2: Sanity-check every claim against the code** (ports 8001/5173, endpoint paths in `app/routers/*.py`, status codes). Fix the README if any claim is wrong — never weaken a test to match a doc.
+- [x] **Step 2: Sanity-check every claim against the code** (ports 8001/5173, endpoint paths in `app/routers/*.py`, status codes). Fix the README if any claim is wrong — never weaken a test to match a doc.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add README.md
@@ -1151,12 +1156,12 @@ def test_assign_flow(client, db_session):
                         json={"engineer_id": 99999}).status_code == 404
 ```
 
-- [ ] **Step 2: Start the dev DB if not running, then run tests**
+- [x] **Step 2: Start the dev DB if not running, then run tests**
 
 Run: `docker compose up -d db` then `.venv\Scripts\python -m pytest tests -q`
 Expected: all PASS (unit + integration).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/test_api.py
@@ -1181,12 +1186,12 @@ if __name__ == "__main__":
 
 The mocked SLA tests patch `sla.SessionLocal` and `sla.or_` so the `_check_slas_inner` query chain (`.filter(...).filter(...).all()`) is fully mocked without a real DB.
 
-- [ ] **Step 3: Run and verify all pass**
+- [x] **Step 3: Run and verify all pass**
 
 Run: `.venv\Scripts\python -m pytest tests/test_units.py -q`
 Expected: all PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/test_units.py
@@ -1238,12 +1243,12 @@ def client(db_session):
     app.dependency_overrides.clear()
 ```
 
-- [ ] **Step 5: Verify pytest runs the existing suite**
+- [x] **Step 5: Verify pytest runs the existing suite**
 
 Run: `.venv\Scripts\python -m pytest tests -q`
 Expected: existing tests pass; integration-marked tests skip if no local DB.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add requirements-dev.txt pytest.ini tests/conftest.py
