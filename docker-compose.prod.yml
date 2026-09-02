@@ -16,7 +16,9 @@ services:
       retries: 5
 
   api:
-    build: ./app
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     restart: always
     # Fixed host port, loopback-only (Caddy is the public entrypoint).
     ports:
@@ -26,6 +28,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   caddy:
     build:
@@ -47,7 +55,8 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:

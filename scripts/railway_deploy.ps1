@@ -42,11 +42,13 @@ foreach ($v in @(@('POSTGRES_USER','postgres'), @('POSTGRES_DB','tracepulse'), @
 GQL 'mutation($p:String!,$s:String!){ volumeCreate(input:{ projectId:$p serviceId:$s mountPath:"/var/lib/postgresql/data" }){ id } }' @{ p = $proj; s = $dbSvc } | Out-Null
 Write-Host 'db vars + volume set'
 
-# 4. api service from repo, root dir app/
+# 4. api service from repo ROOT (Dockerfile needs alembic.ini + migrations/),
+#    with RAILWAY_DOCKERFILE_PATH pointing at app/Dockerfile
 $d = GQL 'mutation($p:String!,$n:String!,$r:String!){ serviceCreate(input:{ projectId:$p name:$n source:{ repo:$r } }){ id } }' @{ p = $proj; n = 'tracepulse-api'; r = 'yashsolanki27/tracepulse' }
 $apiSvc = $d.serviceCreate.id
 Write-Host "api service: $apiSvc"
-GQL 'mutation($e:String!,$s:String!,$rd:String){ serviceInstanceUpdate(environmentId:$e serviceId:$s rootDirectory:$rd){ id } }' @{ e = $envId; s = $apiSvc; rd = 'app' } | Out-Null
+GQL 'mutation($e:String!,$s:String!,$rd:String){ serviceInstanceUpdate(environmentId:$e serviceId:$s rootDirectory:$rd){ id } }' @{ e = $envId; s = $apiSvc; rd = '.' } | Out-Null
+GQL 'mutation($e:String!,$s:String!,$k:String!,$v:String!){ variableUpsert(input:{ environmentId:$e serviceId:$s name:$k value:$v }){ id } }' @{ e = $envId; s = $apiSvc; k = 'RAILWAY_DOCKERFILE_PATH'; v = 'app/Dockerfile' } | Out-Null
 
 # 5. frontend service from repo, root dir frontend/
 $d = GQL 'mutation($p:String!,$n:String!,$r:String!){ serviceCreate(input:{ projectId:$p name:$n source:{ repo:$r } }){ id } }' @{ p = $proj; n = 'tracepulse-frontend'; r = 'yashsolanki27/tracepulse' }

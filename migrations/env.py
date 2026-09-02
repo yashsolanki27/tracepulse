@@ -6,8 +6,10 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.models import Base
-
+try:
+    from app.models import Base
+except ImportError:  # container image: flat layout (/app/models.py), not a package
+    from models import Base
 config = context.config
 
 if config.config_file_name is not None:

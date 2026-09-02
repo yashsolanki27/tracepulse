@@ -1,0 +1,12 @@
+# Build context is the repo root; keep secrets/scratch out of the image.
+.env
+.env.*
+*.log
+.git
+.venv
+.claude
+__pycache__
+**/__pycache__
+docs
+frontend/node_modules
+tests

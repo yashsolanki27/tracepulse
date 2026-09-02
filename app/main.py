@@ -25,7 +25,6 @@ CORS_ORIGINS = [
 
 from database import engine
 from email_ingest import poll_inbox
-from models import Base
 from routers import engineers, ingest, tickets
 from sla import check_slas
 
@@ -46,7 +45,6 @@ def _ensure_pgvector() -> None:
 
 
 _ensure_pgvector()
-Base.metadata.create_all(bind=engine)
 
 scheduler = BackgroundScheduler(timezone="UTC")
 
@@ -99,3 +97,8 @@ app.add_middleware(
 app.include_router(tickets.router)
 app.include_router(engineers.router)
 app.include_router(ingest.router)
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
